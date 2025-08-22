@@ -1,0 +1,50 @@
+services:
+
+  nginx:
+    build: requirements/nginx
+    image: nginx
+    container_name: nginx
+    depends_on:
+      - wp-php
+    env_file: .env
+    ports:
+      - "443:443"
+    networks:
+      - inception
+    volumes:
+      - ${HOME}/data/web:/var/www/html
+    restart: always
+
+  wp-php:
+    build: requirements/wp-php
+    image: wordpress
+    container_name: wp-php
+    depends_on:
+      - mariadb
+    env_file: .env
+    volumes:
+      - ${HOME}/data/web:/var/www/html
+    networks:
+      - inception
+    restart: always
+
+  mariadb:
+    build: requirements/mariadb
+    image: mariadb
+    container_name: mariadb
+    env_file: .env
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - inception
+    restart: unless-stopped
+    
+networks:
+  inception:
+    name: inception
+    driver: bridge
+
+volumes:
+  mariadb_data:
