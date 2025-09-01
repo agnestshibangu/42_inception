@@ -1,55 +1,62 @@
 services:
-
-  nginx:
-    build: requirements/nginx
-    image: nginx
-    container_name: nginx
-    depends_on:
-      - wp-php
-    env_file: .env
-    ports:
-      - "443:443"
-    networks:
-      - inception
-    volumes:
-      - ${HOME}/data/web:/var/www/html
-    restart: always
-
-  wp-php:
-    build: requirements/wp-php
-    image: wordpress
-    container_name: wp-php
-    depends_on:
-      - mariadb
-    env_file: .env
-    volumes:
-      - ${HOME}/data/web:/var/www/html
-    networks:
-      - inception
-    restart: always
-
-  mariadb:
-    build: requirements/mariadb
-    image: mariadb
-    container_name: mariadb
-    env_file: .env
-    volumes:
-      - mariadb_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    networks:
-      - inception
-    restart: unless-stopped
-    
-networks:
-  inception:
-    name: inception
-    driver: bridge
-
+    mariadb:
+        build: requirements/mariadb
+        container_name: mariadb
+        env_file:
+        - .env
+        volumes:
+        - db:/var/lib/mysql
+        ports:
+        - "3306:3306"
+        networks:
+        - inception
+        restart: always
+        command: mariadbd --user=mysql
+    nginx:
+      container_name: nginx
+      networks:
+        - inception
+      depends_on:
+        - wp-php
+      build:
+        context: requirements/nginx
+        dockerfile: Dockerfile
+      env_file:
+        - .env
+      ports:
+        - "443:443"
+      restart: always
+      volumes:
+        - web:/var/www/html
+    wp-php:
+      container_name: wp-php
+      networks:
+        - inception
+      build:
+        context: requirements/wp-php
+        dockerfile: Dockerfile
+      depends_on:
+        - mariadb
+      env_file:
+        - .env
+      volumes:
+        - web:/var/www/html
+      restart: always
+      expose:
+        - 9000
 volumes:
-  mariadb_data:
-   driver: local
-   driver_opts:
-     type: 'none'
-     o: 'bind'
-     device: /home/agnes/data/mariadb
+  db:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: /home/agtshiba/data/mariadb
+  web:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: /home/agtshiba/data/web
+networks:
+   inception:
+     driver: bridge

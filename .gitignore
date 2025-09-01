@@ -1,1 +1,7 @@
 srcs/*.env
+# Ignorer les volumes de données
+/home/agtshiba/data/db/
+/home/agtshiba/data/web/
+/home/agtshiba/data/mariadb/
+/home/agtshiba/data/wordpress/
+agtshiba/data/
