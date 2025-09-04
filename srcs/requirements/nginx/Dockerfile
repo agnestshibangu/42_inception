@@ -1,16 +1,21 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
-RUN apt update -y && apt upgrade -y && apt install nginx openssl -y
+# Empêche les invites interactives
+ENV DEBIAN_FRONTEND=noninteractive
 
+RUN apt update -y && apt upgrade -y \
+    && apt install -y nginx openssl \
+    && mkdir -p /etc/nginx/ssl/ /run/nginx
+
+# Configuration Nginx
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 
-RUN mkdir -p /etc/nginx/ssl/
-
+# Certificats SSL
 COPY tools/nginx.key /etc/nginx/ssl/nginx.key
 COPY tools/nginx.crt /etc/nginx/ssl/nginx.crt
 
-RUN mkdir -p /run/nginx
-
+# Expose le port HTTPS
 EXPOSE 443
 
 CMD ["nginx", "-g", "daemon off;"]
+

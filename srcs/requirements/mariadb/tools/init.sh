@@ -1,34 +1,38 @@
 #!/bin/bash
+set -e
 
-echo "Starting MariaDB..."
-service mariadb start
+echo "Initializing MariaDB..."
 
-sleep 2
+# Assure que le répertoire PID existe
+mkdir -p /var/run/mysqld
+chown -R mysql:mysql /var/lib/mysql
+chown -R mysql:mysql /var/run/mysqld
 
-#echo "Creating user..."
-#mysql -e "CREATE USER IF NOT EXISTS \`${DB_USER}\`@'%' IDENTIFIED BY '${DB_PWD}';"
-#mysql -e "GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';"
-
-#mysql -e "FLUSH PRIVILEGES;"
-
-#echo "Generating database..."
-#mysql -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
+# Supprime un ancien PID si nécessaire
 if [ -f /var/run/mysqld/mysqld.pid ]; then
     rm -f /var/run/mysqld/mysqld.pid
 fi
 
-# Vérifier si la base de données existe déjà
+# Démarre MariaDB en arrière-plan
+mariadbd --user=mysql --skip-networking &
+sleep 5
+
+# Vérifie si la base existe
 if [ ! -d "/var/lib/mysql/${DB_NAME}" ]; then
     echo "Creating database and user..."
-    mysql -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;"
-    mysql -e "CREATE USER IF NOT EXISTS \`${DB_USER}\`@'%' IDENTIFIED BY '${DB_PWD}';"
-    mysql -e "GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO \`${DB_USER}\`@'%';"
-    mysql -e "FLUSH PRIVILEGES;"
+    mysql -u root <<-EOSQL
+        CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
+        CREATE USER IF NOT EXISTS \`${DB_USER}\`@'%' IDENTIFIED BY '${DB_PWD}';
+        GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO \`${DB_USER}\`@'%';
+        FLUSH PRIVILEGES;
+EOSQL
 else
     echo "Database already exists, skipping initialization."
 fi
 
-echo "Stopping MariaDB..."
+# Stop le serveur après init
 mysqladmin -u root shutdown
 
+# Lancer le serveur principal
 exec "$@"
+
