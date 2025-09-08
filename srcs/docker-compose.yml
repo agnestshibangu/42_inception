@@ -1,24 +1,24 @@
-version: "3.8"
-
 services:
   mariadb:
     build: requirements/mariadb
     container_name: mariadb
+    image: mariadb
     env_file:
       - .env
     volumes:
       - db:/var/lib/mysql
-    ports:
-      - "3306:3306"
+    expose:
+      - "3306"
     networks:
       - inception
     restart: always
 
-  wp-php:
+  wordpress:
     build:
       context: requirements/wp-php
       dockerfile: Dockerfile
-    container_name: wp-php
+    image: wordpress
+    container_name: wordpress
     depends_on:
       - mariadb
     env_file:
@@ -35,9 +35,10 @@ services:
     build:
       context: requirements/nginx
       dockerfile: Dockerfile
+    image: nginx
     container_name: nginx
     depends_on:
-      - wp-php
+      - wordpress
     env_file:
       - .env
     volumes:

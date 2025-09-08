@@ -23,7 +23,7 @@ logs:
 
 stop:
 	@docker compose -f ./srcs/docker-compose.yml stop
-	@docker kill mariadb || true
+	@docker kill mariadb 2>/dev/null || echo "MariaDB already stopped."
 
 down:
 	@docker compose -f ./srcs/docker-compose.yml down -v --remove-orphans
